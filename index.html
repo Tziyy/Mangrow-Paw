@@ -580,6 +580,54 @@
             font-size: 0.8rem;
             opacity: 0.8;
         }
+        @media (max-width: 420px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tile-large {
+                grid-column: span 1;
+            }
+
+            .dash-main-val {
+                font-size: 1.3rem;
+            }
+
+            .nav-icon {
+                font-size: 1.2rem;
+            }
+
+            .tile {
+                padding: 14px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            html {
+                font-size: 14px;
+            }
+        }
+
+        /* Fix mobile viewport height issue */
+        body {
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        /* iOS safe area fix */
+        .nav-bar {
+            padding-bottom: calc(35px + env(safe-area-inset-bottom));
+        }
+
+        /* Prevent horizontal overflow on small screens */
+        .view-container {
+            overflow-x: hidden;
+        }
+
+        /* Make charts responsive */
+        canvas {
+            max-width: 100%;
+        }
     </style>
 </head>
 <body>
