@@ -1,0 +1,74 @@
+D:\Mangrow Paw\bin\Mangrow Paw.dll.config
+D:\Mangrow Paw\bin\Mangrow Paw.dll
+D:\Mangrow Paw\bin\Mangrow Paw.pdb
+D:\Mangrow Paw\bin\roslyn\csc.exe
+D:\Mangrow Paw\bin\roslyn\csc.exe.config
+D:\Mangrow Paw\bin\roslyn\csc.rsp
+D:\Mangrow Paw\bin\roslyn\csi.exe
+D:\Mangrow Paw\bin\roslyn\csi.exe.config
+D:\Mangrow Paw\bin\roslyn\csi.rsp
+D:\Mangrow Paw\bin\roslyn\Microsoft.Build.Tasks.CodeAnalysis.dll
+D:\Mangrow Paw\bin\roslyn\Microsoft.CodeAnalysis.CSharp.dll
+D:\Mangrow Paw\bin\roslyn\Microsoft.CodeAnalysis.CSharp.Scripting.dll
+D:\Mangrow Paw\bin\roslyn\Microsoft.CodeAnalysis.dll
+D:\Mangrow Paw\bin\roslyn\Microsoft.CodeAnalysis.Scripting.dll
+D:\Mangrow Paw\bin\roslyn\Microsoft.CodeAnalysis.VisualBasic.dll
+D:\Mangrow Paw\bin\roslyn\Microsoft.CSharp.Core.targets
+D:\Mangrow Paw\bin\roslyn\Microsoft.DiaSymReader.Native.amd64.dll
+D:\Mangrow Paw\bin\roslyn\Microsoft.DiaSymReader.Native.x86.dll
+D:\Mangrow Paw\bin\roslyn\Microsoft.Managed.Core.targets
+D:\Mangrow Paw\bin\roslyn\Microsoft.VisualBasic.Core.targets
+D:\Mangrow Paw\bin\roslyn\Microsoft.Win32.Primitives.dll
+D:\Mangrow Paw\bin\roslyn\System.AppContext.dll
+D:\Mangrow Paw\bin\roslyn\System.Collections.Immutable.dll
+D:\Mangrow Paw\bin\roslyn\System.Console.dll
+D:\Mangrow Paw\bin\roslyn\System.Diagnostics.DiagnosticSource.dll
+D:\Mangrow Paw\bin\roslyn\System.Diagnostics.FileVersionInfo.dll
+D:\Mangrow Paw\bin\roslyn\System.Diagnostics.StackTrace.dll
+D:\Mangrow Paw\bin\roslyn\System.Globalization.Calendars.dll
+D:\Mangrow Paw\bin\roslyn\System.IO.Compression.dll
+D:\Mangrow Paw\bin\roslyn\System.IO.Compression.ZipFile.dll
+D:\Mangrow Paw\bin\roslyn\System.IO.FileSystem.dll
+D:\Mangrow Paw\bin\roslyn\System.IO.FileSystem.Primitives.dll
+D:\Mangrow Paw\bin\roslyn\System.Net.Http.dll
+D:\Mangrow Paw\bin\roslyn\System.Net.Sockets.dll
+D:\Mangrow Paw\bin\roslyn\System.Reflection.Metadata.dll
+D:\Mangrow Paw\bin\roslyn\System.Runtime.InteropServices.RuntimeInformation.dll
+D:\Mangrow Paw\bin\roslyn\System.Security.Cryptography.Algorithms.dll
+D:\Mangrow Paw\bin\roslyn\System.Security.Cryptography.Encoding.dll
+D:\Mangrow Paw\bin\roslyn\System.Security.Cryptography.Primitives.dll
+D:\Mangrow Paw\bin\roslyn\System.Security.Cryptography.X509Certificates.dll
+D:\Mangrow Paw\bin\roslyn\System.Text.Encoding.CodePages.dll
+D:\Mangrow Paw\bin\roslyn\System.Threading.Tasks.Extensions.dll
+D:\Mangrow Paw\bin\roslyn\System.ValueTuple.dll
+D:\Mangrow Paw\bin\roslyn\System.Xml.ReaderWriter.dll
+D:\Mangrow Paw\bin\roslyn\System.Xml.XmlDocument.dll
+D:\Mangrow Paw\bin\roslyn\System.Xml.XPath.dll
+D:\Mangrow Paw\bin\roslyn\System.Xml.XPath.XDocument.dll
+D:\Mangrow Paw\bin\roslyn\vbc.exe
+D:\Mangrow Paw\bin\roslyn\vbc.exe.config
+D:\Mangrow Paw\bin\roslyn\vbc.rsp
+D:\Mangrow Paw\bin\roslyn\VBCSCompiler.exe
+D:\Mangrow Paw\bin\roslyn\VBCSCompiler.exe.config
+D:\Mangrow Paw\bin\Antlr3.Runtime.dll
+D:\Mangrow Paw\bin\AspNet.ScriptManager.bootstrap.dll
+D:\Mangrow Paw\bin\AspNet.ScriptManager.jQuery.dll
+D:\Mangrow Paw\bin\Microsoft.AspNet.FriendlyUrls.dll
+D:\Mangrow Paw\bin\Microsoft.AspNet.Web.Optimization.WebForms.dll
+D:\Mangrow Paw\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll
+D:\Mangrow Paw\bin\Microsoft.ScriptManager.MSAjax.dll
+D:\Mangrow Paw\bin\Microsoft.ScriptManager.WebForms.dll
+D:\Mangrow Paw\bin\Microsoft.Web.Infrastructure.dll
+D:\Mangrow Paw\bin\Newtonsoft.Json.dll
+D:\Mangrow Paw\bin\System.Web.Optimization.dll
+D:\Mangrow Paw\bin\WebGrease.dll
+D:\Mangrow Paw\bin\System.Web.Optimization.xml
+D:\Mangrow Paw\bin\Newtonsoft.Json.xml
+D:\Mangrow Paw\bin\Antlr3.Runtime.pdb
+D:\Mangrow Paw\bin\Microsoft.AspNet.FriendlyUrls.xml
+D:\Mangrow Paw\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.xml
+D:\Mangrow Paw\obj\Debug\Mangrow Paw.csproj.AssemblyReference.cache
+D:\Mangrow Paw\obj\Debug\Mangrow Paw.csproj.CoreCompileInputs.cache
+D:\Mangrow Paw\obj\Debug\Mangrow Paw.csproj.CopyComplete
+D:\Mangrow Paw\obj\Debug\Mangrow Paw.dll
+D:\Mangrow Paw\obj\Debug\Mangrow Paw.pdb
