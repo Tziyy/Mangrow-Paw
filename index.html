@@ -47,11 +47,37 @@
             margin: 0 auto;
             position: relative;
         }
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            background: rgba(8, 8, 8, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 20px;
+        }
+
+        .top-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .top-icon {
+            font-size: 1.3rem;
+        }
+
+        .top-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--mango);
+            letter-spacing: -0.5px;
+        }
 
         .view-container {
             flex: 1;
             overflow-y: auto;
-            padding: 20px 20px 160px 20px;
+            padding: 10px 20px 160px 20px;
             scroll-behavior: smooth;
         }
 
@@ -648,6 +674,12 @@
     </div>
     <form id="form1" runat="server">
         <div class="app-shell">
+            <div class="top-bar">
+                <div class="top-logo">
+                    <span class="top-icon">🐾</span>
+                    <span class="top-title">Mangrow Paw</span>
+                </div>
+            </div>
             <div class="view-container">
 
                 <section id="homeView" class="view-section active">
