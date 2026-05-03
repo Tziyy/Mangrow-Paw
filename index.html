@@ -116,7 +116,10 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
+            min-height: 140px;
             transition: transform 0.1s;
+            justify-content: space-between;
+            min-height: 160px; /* base consistency */
         }
 
             .tile:active {
@@ -125,6 +128,7 @@
 
         .tile-large {
             grid-column: span 2;
+            min-height: 220px; /* bigger widgets like charts */
         }
 
         .tile-label {
@@ -135,6 +139,13 @@
             letter-spacing: 0.8px;
             margin-bottom: 10px;
         }
+        .tile-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
 
         .dash-row {
             display: flex;
@@ -144,13 +155,22 @@
         }
 
         .dash-chart-circle {
-            width: 90px;
-            height: 90px;
+            width: 100px;
+            height: 100px;
+            position: relative;
+        }
+
+        #dashDonut {
+            position: absolute;
+            inset: 0;
         }
 
         .dash-main-val {
             font-size: 1.6rem;
             font-weight: 800;
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 2;
         }
 
         .tp-wrapper {
@@ -741,25 +761,36 @@
                         <div class="insight-blob"></div>
                     </div>
                     <div class="bento-grid">
-                        <div class="tile tile-large" onclick="switchView('expenseView')">
-                            <span class="tile-label">Spending Distribution</span>
+
+                        <!-- Top Row: Spending + Workout -->
+                        <div class="tile" onclick="switchView('expenseView')" style="position:relative;">
+                            <span class="tile-label">Spending</span>
+
                             <div class="dash-row">
-                                <div class="dash-chart-circle"><canvas id="dashDonut"></canvas></div>
-                                <div style="flex: 1;">
-                                    <div class="dash-main-val" id="dashTotalSpend">RM 0.00</div>
-                                    <small style="color: var(--text-dim)">Today's Total</small>
+                                <div class="dash-chart-circle" style="margin: 0 auto;">
+                                    <canvas id="dashDonut"></canvas>
                                 </div>
                             </div>
                         </div>
+
                         <div class="tile" onclick="switchView('activityView')">
                             <span class="tile-label">Workout</span>
                             <div class="dash-main-val" id="dashActivityMin">0m</div>
                             <small id="dashActivityType" style="color: var(--text-dim)">Rest Day</small>
                         </div>
-                        <div class="tile">
-                            <span class="tile-label">7-Day Trend</span>
-                            <canvas id="miniTrend" height="80"></canvas>
+
+                        <!-- Full Width: Activity Chart -->
+                        <div class="tile tile-large" onclick="switchView('activityView')">
+                            <span class="tile-label">Activity Consistency</span>
+                            <canvas id="homeActivityBar" height="120"></canvas>
                         </div>
+
+                        <!-- Full Width: Habits -->
+                        <div class="tile tile-large" onclick="switchView('habitView')">
+                            <span class="tile-label">Today's Habits</span>
+                            <div id="homeHabitList"></div>
+                        </div>
+
                     </div>
                 </section>
 
@@ -848,6 +879,17 @@
                     </div>
                 </section>
             </div>
+            <div id="editModal" class="modal-overlay">
+                <div class="modal-body">
+                    <span class="modal-close" onclick="closeEditModal()">×</span>
+
+                    <h3 id="editModalTitle">Edit</h3>
+
+                    <div id="editModalFields"></div>
+
+                    <button class="btn-mango" onclick="saveEdit()">Save Changes</button>
+                </div>
+            </div>
 
             <div id="habitModal" class="modal-overlay">
                 <div class="modal-body">
@@ -861,11 +903,11 @@
             </div>
 
             <nav class="nav-bar">
-                <div class="nav-link active" onclick="switchView('homeView')"><span class="nav-icon">🏠</span>Home</div>
-                <div class="nav-link" onclick="switchView('expenseView')"><span class="nav-icon">💸</span>Spend</div>
-                <div class="nav-link" onclick="switchView('activityView')"><span class="nav-icon">🏸</span>Activity</div>
-                <div class="nav-link" onclick="switchView('habitView')"><span class="nav-icon">🌱</span>Habits</div>
-                <div class="nav-link" onclick="switchView('statsView')"><span class="nav-icon">📊</span>Stats</div>
+                <div class="nav-link active" onclick="switchView('homeView', this)"><span class="nav-icon">🏠</span>Home</div>
+                <div class="nav-link" onclick="switchView('expenseView', this)"><span class="nav-icon">💸</span>Spend</div>
+                <div class="nav-link" onclick="switchView('activityView', this)"><span class="nav-icon">🏸</span>Activity</div>
+                <div class="nav-link" onclick="switchView('habitView', this)"><span class="nav-icon">🌱</span>Habits</div>
+                <div class="nav-link" onclick="switchView('statsView', this)"><span class="nav-icon">📊</span>Stats</div>
             </nav>
         </div>
     </form>
@@ -901,6 +943,31 @@
             }, 2800);
         });
         Chart.register(ChartDataLabels);
+
+        const centerTextPlugin = {
+            id: 'centerText',
+            beforeDraw(chart) {
+                if (chart.config.type !== 'doughnut') return;
+
+                const { width, height, ctx } = chart;
+                ctx.save();
+
+                const fontSize = (height / 120).toFixed(2);
+                ctx.font = `${fontSize}em Plus Jakarta Sans`;
+                ctx.textBaseline = "middle";
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#FFFFFF";
+
+                const text = chart.config.options.centerText || "";
+                const x = width / 2;
+                const y = height / 2;
+
+                ctx.fillText(text, x, y);
+                ctx.restore();
+            }
+        };
+
+        Chart.register(centerTextPlugin);
         let db = {
             expenses: JSON.parse(localStorage.getItem('mp_exp')) || [],
             workouts: JSON.parse(localStorage.getItem('mp_fit')) || [],
@@ -945,13 +1012,15 @@
 
         function togAP(id) { let el = document.getElementById(id); el.innerText = el.innerText === 'AM' ? 'PM' : 'AM'; }
 
-        function switchView(id) {
+        function switchView(id, el) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+
             document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-            if (event && event.currentTarget.classList.contains('nav-link')) {
-                event.currentTarget.classList.add('active');
+            if (el) {
+                el.classList.add('active');
             }
+
             refreshVisuals();
         }
 
@@ -1020,10 +1089,13 @@
                         </div>
                     `;
             }
-            document.getElementById('editModal').style.display = 'block';
+            document.getElementById('editModal').classList.add('show');
         }
 
-        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+        function closeEditModal() {
+            const m = document.getElementById('editModal');
+            if (m) m.classList.remove('show');
+        }
 
         function saveEdit() {
             if (editTarget.type === 'expense') {
@@ -1031,10 +1103,21 @@
                 db.expenses[idx].amt = parseFloat(document.getElementById('editVal1').value);
                 db.expenses[idx].cat = document.getElementById('editVal2').value;
                 db.expenses[idx].sub = document.getElementById('editVal3').value;
-            } else {
+
+            } else if (editTarget.type === 'activity') {
                 const idx = db.workouts.findIndex(w => w.id === editTarget.id);
-                const s = getTimeData(document.getElementById('edSH').innerText, document.getElementById('edSM').innerText, document.getElementById('edSAP').innerText);
-                const e = getTimeData(document.getElementById('edEH').innerText, document.getElementById('edEM').innerText, document.getElementById('edEAP').innerText);
+
+                const s = getTimeData(
+                    document.getElementById('edSH').innerText,
+                    document.getElementById('edSM').innerText,
+                    document.getElementById('edSAP').innerText
+                );
+
+                const e = getTimeData(
+                    document.getElementById('edEH').innerText,
+                    document.getElementById('edEM').innerText,
+                    document.getElementById('edEAP').innerText
+                );
 
                 let sd = new Date(); sd.setHours(s.h, s.m, 0, 0);
                 let ed = new Date(); ed.setHours(e.h, e.m, 0, 0);
@@ -1044,7 +1127,16 @@
                 db.workouts[idx].duration = Math.round((ed - sd) / 60000);
                 db.workouts[idx].startTime = s;
                 db.workouts[idx].endTime = e;
+
+            } else if (editTarget.type === 'habit') {
+                const idx = db.habits.findIndex(h => h.id === editTarget.id);
+
+                db.habits[idx].name = document.getElementById('editHabitName').value;
+                db.habits[idx].desc = document.getElementById('editHabitDesc').value;
+                saveAndRender();
+                return;
             }
+
             saveAndRender();
             closeEditModal();
         }
@@ -1124,73 +1216,214 @@
             localStorage.setItem('mp_habits', JSON.stringify(db.habits));
 
             renderLists();
-            renderHabits();  
+            renderHabits();
+            renderHomeHabits();   // ✅ ADD THIS
             refreshVisuals();
         }
 
         let chDash, chStats, chBar;
+        let homeBar;
+
         function refreshVisuals() {
+
             const today = new Date().toLocaleDateString();
+
+            // =========================
+            // DASHBOARD EXPENSE + ACTIVITY
+            // =========================
             const todayExps = db.expenses.filter(e => e.date === today);
             const total = todayExps.reduce((a, b) => a + b.amt, 0);
-            document.getElementById('dashTotalSpend').innerText = `RM ${total.toFixed(2)}`;
+
+            
+
             const todayAct = db.workouts.filter(w => w.date === today);
             const totalMins = todayAct.reduce((a, b) => a + b.duration, 0);
-            document.getElementById('dashActivityMin').innerText = formatDuration(totalMins);
-            document.getElementById('dashActivityType').innerText = todayAct.length > 0 ? todayAct[0].type : 'Rest Day';
 
+            document.getElementById('dashActivityMin').innerText = formatDuration(totalMins);
+            document.getElementById('dashActivityType').innerText =
+                todayAct.length > 0 ? todayAct[0].type : 'Rest Day';
+
+            // =========================
+            // DONUT CHART (EXPENSE)
+            // =========================
             if (chDash) chDash.destroy();
-            const todayVals = cats.map(c => todayExps.filter(e => e.cat === c).reduce((a, b) => a + b.amt, 0));
+
+            const todayVals = cats.map(c =>
+                todayExps
+                    .filter(e => e.cat === c)
+                    .reduce((a, b) => a + b.amt, 0)
+            );
+
             chDash = new Chart(document.getElementById('dashDonut'), {
                 type: 'doughnut',
-                data: { datasets: [{ data: total > 0 ? todayVals : [1], backgroundColor: total > 0 ? colors : ['#1a1a1a'], borderWidth: 0 }] },
-                options: { cutout: '78%', plugins: { datalabels: { display: false }, tooltip: { enabled: false } } }
+                data: {
+                    labels: total > 0 ? cats : ['No Data'],
+                    datasets: [{
+                        data: total > 0 ? todayVals : [1],
+                        backgroundColor: total > 0 ? colors : ['#1a1a1a'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '78%',
+                    centerText: total > 0 ? `RM ${total.toFixed(2)}` : 'No Spend',
+                    plugins: {
+                        datalabels: { display: false },
+                        tooltip: { enabled: false },
+                        legend: { display: false }
+                    }
+                }
             });
 
-            if (document.getElementById('statsView').classList.contains('active')) {
-                if (chStats) chStats.destroy();
-                const today = new Date().toLocaleDateString();
-                const todayExpenses = db.expenses.filter(e => e.date === today);
+            // =========================
+            // HOME ACTIVITY (7-DAY BAR)
+            // =========================
+            if (homeBar) homeBar.destroy();
 
-                const allExpsTotal = todayExpenses.reduce((a, b) => a + b.amt, 0);
+            const last7 = [...Array(7)].map((_, i) => {
+                let d = new Date();
+                d.setDate(d.getDate() - i);
+                return d.toLocaleDateString();
+            }).reverse();
+
+            const fitData = last7.map(d =>
+                db.workouts
+                    .filter(w => w.date === d)
+                    .reduce((a, b) => a + b.duration, 0)
+            );
+
+            homeBar = new Chart(document.getElementById('homeActivityBar'), {
+                type: 'bar',
+                data: {
+                    labels: ['6d', '5d', '4d', '3d', '2d', '1d', 'Today'],
+                    datasets: [{
+                        data: fitData,
+                        backgroundColor: '#FFC107',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#888',
+                            font: { size: 9 }
+                        }
+                    },
+                    scales: {
+                        y: { display: false },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#444' }
+                        }
+                    }
+                }
+            });
+
+            // =========================
+            // STATS VIEW ONLY (OPTIMIZED)
+            // =========================
+            if (document.getElementById('statsView').classList.contains('active')) {
+
+                if (chStats) chStats.destroy();
+
+                const todayExpenses = db.expenses.filter(e => e.date === today);
 
                 const allVals = cats.map(c =>
                     todayExpenses
                         .filter(e => e.cat === c)
                         .reduce((a, b) => a + b.amt, 0)
                 );
+
+                const allExpsTotal = todayExpenses.reduce((a, b) => a + b.amt, 0);
+                const totalAll = allVals.reduce((a, b) => a + b, 0);
+
                 chStats = new Chart(document.getElementById('statsPie'), {
                     type: 'pie',
-                    data: { labels: cats, datasets: [{ data: allVals, backgroundColor: colors, borderWidth: 0 }] },
-                    options: { maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold', size: 10 }, formatter: (v) => (allExpsTotal > 0 && v > 0) ? (v / allExpsTotal * 100).toFixed(0) + '%' : '' } } }
+                    data: {
+                        labels: cats,
+                        datasets: [{
+                            data: allVals,
+                            backgroundColor: colors,
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            datalabels: {
+                                color: '#fff',
+                                font: { weight: 'bold', size: 10 },
+                                formatter: (v) =>
+                                    (allExpsTotal > 0 && v > 0)
+                                        ? (v / allExpsTotal * 100).toFixed(0) + '%'
+                                        : ''
+                            }
+                        }
+                    }
                 });
-                const totalAll = allVals.reduce((a, b) => a + b, 0);
 
                 document.getElementById('statsTable').innerHTML =
                     cats.map((c, i) => `
-        <div class="stats-legend-row">
-            <span>
-                <span class="color-dot" style="background:${colors[i]}"></span>
-                ${c}
-            </span>
-            <span style="font-weight:700">RM ${allVals[i].toFixed(2)}</span>
-        </div>
-    `).join('') +
+                <div class="stats-legend-row">
+                    <span>
+                        <span class="color-dot" style="background:${colors[i]}"></span>
+                        ${c}
+                    </span>
+                    <span style="font-weight:700">RM ${allVals[i].toFixed(2)}</span>
+                </div>
+            `).join('') +
 
                     `
-    <div class="stats-legend-row" style="border-top:1px solid var(--border); margin-top:8px; padding-top:12px;">
-        <span style="font-weight:800">Total</span>
-        <span style="font-weight:800; color:var(--mango)">RM ${totalAll.toFixed(2)}</span>
-    </div>
-    `;
+                <div class="stats-legend-row" style="border-top:1px solid var(--border); margin-top:8px; padding-top:12px;">
+                    <span style="font-weight:800">Total</span>
+                    <span style="font-weight:800; color:var(--mango)">RM ${totalAll.toFixed(2)}</span>
+                </div>
+            `;
 
                 if (chBar) chBar.destroy();
-                const last7 = [...Array(7)].map((_, i) => { let d = new Date(); d.setDate(d.getDate() - i); return d.toLocaleDateString(); }).reverse();
-                const fitData = last7.map(d => db.workouts.filter(w => w.date === d).reduce((a, b) => a + b.duration, 0));
+
+                const last7Stats = [...Array(7)].map((_, i) => {
+                    let d = new Date();
+                    d.setDate(d.getDate() - i);
+                    return d.toLocaleDateString();
+                }).reverse();
+
+                const fitDataStats = last7Stats.map(d =>
+                    db.workouts
+                        .filter(w => w.date === d)
+                        .reduce((a, b) => a + b.duration, 0)
+                );
+
                 chBar = new Chart(document.getElementById('statsBar'), {
                     type: 'bar',
-                    data: { labels: ['6d', '5d', '4d', '3d', '2d', '1d', 'Today'], datasets: [{ data: fitData, backgroundColor: '#FFC107', borderRadius: 6 }] },
-                    options: { plugins: { datalabels: { anchor: 'end', align: 'top', color: '#888', font: { size: 9 } } }, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: '#444' } } } }
+                    data: {
+                        labels: ['6d', '5d', '4d', '3d', '2d', '1d', 'Today'],
+                        datasets: [{
+                            data: fitDataStats,
+                            backgroundColor: '#FFC107',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                color: '#888',
+                                font: { size: 9 }
+                            }
+                        },
+                        scales: {
+                            y: { display: false },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#444' }
+                            }
+                        }
+                    }
                 });
             }
         }
@@ -1238,8 +1471,7 @@
             document.getElementById('habitName').value = '';
             document.getElementById('habitDesc').value = '';
 
-            saveHabits();
-            renderHabits();
+            saveAndRender();
         }
 
         function toggleHabitDone(id) {
@@ -1255,7 +1487,7 @@
             }
 
             saveHabits();
-            renderHabits();
+            saveAndRender();   // ensures dashboard updates too
         }
 
         function getStreak(habit) {
@@ -1372,22 +1604,26 @@
         function deleteHabit(id) {
             if (!confirm("Delete this habit?")) return;
             db.habits = db.habits.filter(h => h.id !== id);
-            saveHabits();
-            renderHabits();
+            saveAndRender();
         }
 
         function openEditHabit(id) {
             const h = db.habits.find(x => x.id === id);
             if (!h) return;
 
-            habitEditTarget = id;
+            editTarget = { id, type: 'habit' };
 
-            document.getElementById('habitName').value = h.name;
-            document.getElementById('habitDesc').value = h.desc;
+            const fields = document.getElementById('editModalFields');
+            const title = document.getElementById('editModalTitle');
 
-            // change button to "Update"
-            document.querySelector('#habitView .btn-mango').innerText = "Update Habit";
-            document.querySelector('#habitView .btn-mango').setAttribute("onclick", "updateHabit()");
+            title.innerText = "Edit Habit";
+
+            fields.innerHTML = `
+        <input type="text" id="editHabitName" value="${h.name}" placeholder="Habit name">
+        <input type="text" id="editHabitDesc" value="${h.desc}" placeholder="Description">
+    `;
+
+            document.getElementById('editModal').classList.add('show');
         }
 
         function updateHabit() {
@@ -1409,6 +1645,49 @@
             renderHabits();
         }
 
+        function renderHomeHabits() {
+            const today = new Date().toLocaleDateString();
+            const container = document.getElementById('homeHabitList');
+
+            if (!container) return;
+
+            if (db.habits.length === 0) {
+                container.innerHTML = `<small style="color:var(--text-dim)">No habits yet</small>`;
+                return;
+            }
+
+            container.innerHTML = db.habits.map(h => {
+                const streak = getStreak(h);
+                const doneToday = h.logs.includes(today);
+
+                return `
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding:6px 0;
+    ">
+        <div>
+            <div style="font-weight:700; font-size:0.9rem;">
+                ${h.name}
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-dim);">
+                🔥 ${streak}d streak
+            </div>
+        </div>
+
+        <div style="
+    font-size:0.75rem;
+    font-weight:800;
+    color:${doneToday ? '#4CAF50' : '#FF5252'};
+">
+    ${doneToday ? 'DONE' : 'NOT DONE'}
+</div>
+    </div>
+    `;
+            }).join('');
+        }
+        renderHomeHabits();
         renderLists();
         renderHabits();
         refreshVisuals();
