@@ -51,7 +51,7 @@
         .view-container {
             flex: 1;
             overflow-y: auto;
-            padding: 20px 20px 110px 20px;
+            padding: 20px 20px 160px 20px;
             scroll-behavior: smooth;
         }
 
@@ -303,7 +303,9 @@
         .nav-bar {
             position: fixed;
             bottom: 0;
+            height: 80px;
             width: 100%;
+            box-sizing: border-box;
             max-width: 500px;
             background: rgba(8, 8, 8, 0.8);
             backdrop-filter: blur(20px);
@@ -616,7 +618,7 @@
 
         /* iOS safe area fix */
         .nav-bar {
-            padding-bottom: calc(35px + env(safe-area-inset-bottom));
+            padding: 15px 0 calc(25px + env(safe-area-inset-bottom));
         }
 
         /* Prevent horizontal overflow on small screens */
