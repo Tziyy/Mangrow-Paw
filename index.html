@@ -366,19 +366,27 @@
             inset: 0;
             background: rgba(0,0,0,0.85);
             z-index: 100;
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
             padding: 20px;
-            backdrop-filter: blur(5px);
             overflow-y: auto;
         }
+            .modal-overlay.show {
+                display: flex;
+            }
 
         .modal-body {
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 28px;
-            padding: 25px;
-            margin: 40px auto;
+            padding: 28px;
+            width: 100%;
             max-width: 460px;
             position: relative;
+            /* better floating feel */
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            animation: popIn 0.2s ease;
         }
 
         .modal-close {
@@ -388,6 +396,17 @@
             font-size: 1.5rem;
             color: var(--text-dim);
             cursor: pointer;
+        }
+        @keyframes popIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         /* Updated Loading Screen Styles */
@@ -656,6 +675,32 @@
         canvas {
             max-width: 100%;
         }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .calendar-day {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            background: var(--glass);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+            .calendar-day.done {
+                background: var(--accent-green);
+                color: #000;
+                font-weight: 700;
+            }
     </style>
 </head>
 <body>
@@ -777,6 +822,19 @@
                     <div id="activityList"></div>
                 </section>
 
+                <section id="habitView" class="view-section">
+                    <h2>Habits 🌱</h2>
+
+                    <div class="tile tile-large">
+                        <input type="text" id="habitName" placeholder="Habit name (e.g. Drink Water)">
+                        <input type="text" id="habitDesc" placeholder="Description (optional)">
+                        <button type="button" class="btn-mango" onclick="addHabit()">Add Habit</button>
+                    </div>
+
+                    <h3 style="margin: 25px 0 15px 0;">My Habits</h3>
+                    <div id="habitList"></div>
+                </section>
+
                 <section id="statsView" class="view-section">
                     <h2>Insights 📊</h2>
                     <div class="tile tile-large" style="margin-bottom: 15px;">
@@ -791,12 +849,14 @@
                 </section>
             </div>
 
-            <div id="editModal" class="modal-overlay">
+            <div id="habitModal" class="modal-overlay">
                 <div class="modal-body">
-                    <span class="modal-close" onclick="closeEditModal()">×</span>
-                    <h3 id="editModalTitle">Edit Entry</h3>
-                    <div id="editModalFields"></div>
-                    <button type="button" class="btn-mango" onclick="saveEdit()">Update Entry</button>
+                    <span class="modal-close" onclick="closeHabitModal()">×</span>
+
+                    <h3 id="habitModalTitle">Habit Progress</h3>
+                    <div id="habitStreakInfo" style="margin-bottom:15px; color: var(--text-dim);"></div>
+
+                    <div id="habitCalendar"></div>
                 </div>
             </div>
 
@@ -804,6 +864,7 @@
                 <div class="nav-link active" onclick="switchView('homeView')"><span class="nav-icon">🏠</span>Home</div>
                 <div class="nav-link" onclick="switchView('expenseView')"><span class="nav-icon">💸</span>Spend</div>
                 <div class="nav-link" onclick="switchView('activityView')"><span class="nav-icon">🏸</span>Activity</div>
+                <div class="nav-link" onclick="switchView('habitView')"><span class="nav-icon">🌱</span>Habits</div>
                 <div class="nav-link" onclick="switchView('statsView')"><span class="nav-icon">📊</span>Stats</div>
             </nav>
         </div>
@@ -842,7 +903,8 @@
         Chart.register(ChartDataLabels);
         let db = {
             expenses: JSON.parse(localStorage.getItem('mp_exp')) || [],
-            workouts: JSON.parse(localStorage.getItem('mp_fit')) || []
+            workouts: JSON.parse(localStorage.getItem('mp_fit')) || [],
+            habits: JSON.parse(localStorage.getItem('mp_habits')) || []
         };
         const cats = ['Meal', 'Transport', 'Entertainment', 'Others'];
         const colors = ['#FFC107', '#4CAF50', '#2196F3', '#9C27B0'];
@@ -1059,7 +1121,10 @@
         function saveAndRender() {
             localStorage.setItem('mp_exp', JSON.stringify(db.expenses));
             localStorage.setItem('mp_fit', JSON.stringify(db.workouts));
+            localStorage.setItem('mp_habits', JSON.stringify(db.habits));
+
             renderLists();
+            renderHabits();  
             refreshVisuals();
         }
 
@@ -1157,8 +1222,196 @@
                 </div>`).join('');
         }
 
+        function addHabit() {
+            const name = document.getElementById('habitName').value.trim();
+            const desc = document.getElementById('habitDesc').value.trim();
+
+            if (!name) return;
+
+            db.habits.push({
+                id: Date.now(),
+                name,
+                desc,
+                logs: []
+            });
+
+            document.getElementById('habitName').value = '';
+            document.getElementById('habitDesc').value = '';
+
+            saveHabits();
+            renderHabits();
+        }
+
+        function toggleHabitDone(id) {
+            const today = new Date().toLocaleDateString();
+            const habit = db.habits.find(h => h.id === id);
+
+            if (!habit) return;
+
+            if (!habit.logs.includes(today)) {
+                habit.logs.push(today);
+            } else {
+                habit.logs = habit.logs.filter(d => d !== today);
+            }
+
+            saveHabits();
+            renderHabits();
+        }
+
+        function getStreak(habit) {
+            let streak = 0;
+            let d = new Date();
+
+            while (true) {
+                const dateStr = d.toLocaleDateString();
+                if (habit.logs.includes(dateStr)) {
+                    streak++;
+                    d.setDate(d.getDate() - 1);
+                } else break;
+            }
+            return streak;
+        }
+
+        function saveHabits() {
+            localStorage.setItem('mp_habits', JSON.stringify(db.habits));
+        }
+
+        function renderHabits() {
+            const today = new Date().toLocaleDateString();
+
+            document.getElementById('habitList').innerHTML = db.habits.map(h => {
+                const doneToday = h.logs.includes(today);
+                const streak = getStreak(h);
+
+                return `
+<div class="log-card" onclick="openHabit(${h.id})">
+    <div class="log-meta">
+        <strong>${h.name}</strong>
+        <small>${h.desc || 'No description'}</small>
+    </div>
+
+    <div class="actions">
+        <span style="font-weight:700; color: var(--mango)">
+            🔥 ${streak} streak
+        </span>
+
+        <div class="action-btns">
+            <button type="button" class="btn-edit"
+                onclick="event.stopPropagation(); openEditHabit(${h.id})">
+                ✎
+            </button>
+
+            <button type="button" class="btn-act"
+                style="color:var(--accent-red)"
+                onclick="event.stopPropagation(); deleteHabit(${h.id})">
+                ×
+            </button>
+        </div>
+
+        <button type="button"
+            class="btn-mango"
+            style="padding:8px 12px; margin-top:6px; background:${doneToday ? '#4CAF50' : '#FFC107'}"
+            onclick="event.stopPropagation(); toggleHabitDone(${h.id})">
+            ${doneToday ? 'Done ✔' : 'Check In'}
+        </button>
+    </div>
+</div>
+`;
+            }).join('');
+        }
+
+        function openHabit(id) {
+            const h = db.habits.find(x => x.id === id);
+            if (!h) return;
+
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+
+            let calendarHTML = `<div class="calendar-grid">`;
+
+            // empty spaces before month start
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                calendarHTML += `<div></div>`;
+            }
+
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                const dateObj = new Date(year, month, d);
+                const dateStr = dateObj.toLocaleDateString();
+
+                const done = h.logs.includes(dateStr);
+
+                calendarHTML += `
+            <div class="calendar-day ${done ? 'done' : ''}">
+                ${d}
+            </div>
+        `;
+            }
+
+            calendarHTML += `</div>`;
+
+            document.getElementById('habitModalTitle').innerText = h.name;
+            document.getElementById('habitStreakInfo').innerHTML =
+                `🔥 Current streak: ${getStreak(h)} days<br>
+         📅 Total completed: ${h.logs.length}`;
+
+            document.getElementById('habitCalendar').innerHTML = calendarHTML;
+
+            document.getElementById('habitModal').classList.add('show');
+        }
+
+        function closeHabitModal() {
+            document.getElementById('habitModal').classList.remove('show');
+        }
+
+        let habitEditTarget = null;
+
+        function deleteHabit(id) {
+            if (!confirm("Delete this habit?")) return;
+            db.habits = db.habits.filter(h => h.id !== id);
+            saveHabits();
+            renderHabits();
+        }
+
+        function openEditHabit(id) {
+            const h = db.habits.find(x => x.id === id);
+            if (!h) return;
+
+            habitEditTarget = id;
+
+            document.getElementById('habitName').value = h.name;
+            document.getElementById('habitDesc').value = h.desc;
+
+            // change button to "Update"
+            document.querySelector('#habitView .btn-mango').innerText = "Update Habit";
+            document.querySelector('#habitView .btn-mango').setAttribute("onclick", "updateHabit()");
+        }
+
+        function updateHabit() {
+            const h = db.habits.find(x => x.id === habitEditTarget);
+            if (!h) return;
+
+            h.name = document.getElementById('habitName').value.trim();
+            h.desc = document.getElementById('habitDesc').value.trim();
+
+            // reset UI
+            document.getElementById('habitName').value = '';
+            document.getElementById('habitDesc').value = '';
+            document.querySelector('#habitView .btn-mango').innerText = "Add Habit";
+            document.querySelector('#habitView .btn-mango').setAttribute("onclick", "addHabit()");
+
+            habitEditTarget = null;
+
+            saveHabits();
+            renderHabits();
+        }
+
         renderLists();
+        renderHabits();
         refreshVisuals();
-    </script>ipt>
+    </script>
 </body>
 </html>
