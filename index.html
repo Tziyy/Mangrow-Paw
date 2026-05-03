@@ -1,0 +1,1060 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head runat="server">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mangrow Paw | 2026</title>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #080808;
+            --card: #121212;
+            --border: #222222;
+            --mango: #FFC107;
+            --text-main: #FFFFFF;
+            --text-dim: #888888;
+            --accent-green: #4CAF50;
+            --accent-red: #FF5252;
+            --accent-blue: #2196F3;
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-shell {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .view-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 20px 110px 20px;
+            scroll-behavior: smooth;
+        }
+
+        .view-section {
+            display: none;
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+            .view-section.active {
+                display: block;
+            }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 12px;
+            margin-top: 15px;
+        }
+
+        .tile {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.1s;
+        }
+
+            .tile:active {
+                transform: scale(0.98);
+            }
+
+        .tile-large {
+            grid-column: span 2;
+        }
+
+        .tile-label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
+        }
+
+        .dash-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .dash-chart-circle {
+            width: 90px;
+            height: 90px;
+        }
+
+        .dash-main-val {
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+
+        .tp-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: var(--glass);
+            padding: 15px;
+            border-radius: 18px;
+            margin-bottom: 15px;
+        }
+
+        .tp-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tp-btn {
+            background: var(--border);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .tp-val {
+            font-size: 1.2rem;
+            font-weight: 800;
+            width: 30px;
+            text-align: center;
+        }
+
+        .tp-ampm {
+            background: var(--mango);
+            color: black;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 15px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .btn-mango {
+            background: var(--mango);
+            color: #000;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-weight: 700;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+        }
+
+        .pill-box {
+            display: flex;
+            background: var(--card);
+            padding: 5px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            margin-bottom: 15px;
+        }
+
+        .pill {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+            .pill.active {
+                background: var(--mango);
+                color: #000;
+            }
+
+        .log-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+            .log-meta strong {
+                font-size: 1rem;
+            }
+
+            .log-meta small {
+                color: var(--text-dim);
+                font-size: 0.75rem;
+            }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .action-btns {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-act {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .btn-edit {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--text-dim);
+            padding: 5px;
+        }
+
+        .time-label-small {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        .stats-legend-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 5px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 500px;
+            background: rgba(8, 8, 8, 0.8);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0 35px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .nav-link {
+            color: var(--text-dim);
+            text-align: center;
+            font-size: 0.65rem;
+            cursor: pointer;
+            flex: 1;
+            text-decoration: none;
+        }
+
+            .nav-link.active {
+                color: var(--mango);
+            }
+
+        .nav-icon {
+            font-size: 1.4rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 100;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+            overflow-y: auto;
+        }
+
+        .modal-body {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 25px;
+            margin: 40px auto;
+            max-width: 460px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        /* Updated Loading Screen Styles */
+        #loadingScreen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+
+        .loader-content {
+            text-align: center;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        .logo-placeholder {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .logo-text {
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 40px;
+            color: var(--mango);
+        }
+
+        /* Container for bar and cat */
+        .loading-container {
+            position: relative;
+            width: 100%;
+            height: 40px; /* Defined height to contain the cat and bar */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* Keeps the bar at the bottom */
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: var(--mango);
+            border-radius: 10px;
+            animation: fillBar 2.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .walking-cat {
+            position: absolute;
+            bottom: 6px;
+            left: 0;
+            font-size: 1.8rem;
+            line-height: 1;
+            z-index: 2;
+            /* Base transform: centered and flipped to face right */
+            transform: translateX(-50%) scaleX(-1);
+            /* Changed 'catBounce' to 'catWalkCycle' for a realistic gait */
+            animation: catWalk 2.5s forwards cubic-bezier(0.4, 0, 0.2, 1), catWalkCycle 0.4s infinite linear;
+        }
+
+        /* Animations */
+        @keyframes fillBar {
+            to {
+                width: 100%;
+            }
+        }
+
+        @keyframes catWalk {
+            from {
+                left: 0%;
+            }
+
+            to {
+                left: 100%;
+            }
+        }
+
+        @keyframes catWalkCycle {
+            0% {
+                transform: translateX(-50%) scaleX(-1) rotate(0deg);
+            }
+
+            25% {
+                /* Slight tilt forward and dip */
+                transform: translateX(-50%) scaleX(-1) rotate(-5deg) translateY(1px);
+            }
+
+            50% {
+                transform: translateX(-50%) scaleX(-1) rotate(0deg) translateY(0px);
+            }
+
+            75% {
+                /* Slight tilt backward and dip */
+                transform: translateX(-50%) scaleX(-1) rotate(5deg) translateY(1px);
+            }
+
+            100% {
+                transform: translateX(-50%) scaleX(-1) rotate(0deg);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .loader-hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .insight-container {
+            position: relative;
+            background: linear-gradient(145deg, #1a1a1a, #121212);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 24px;
+            margin: 15px 0 25px 0;
+            overflow: hidden; /* Clips the decorative blob */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .insight-content {
+            position: relative;
+            z-index: 2; /* Sits above the blob */
+        }
+
+        .insight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .insight-tag {
+            font-size: 0.6rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: var(--mango);
+            background: rgba(255, 193, 7, 0.1);
+            padding: 4px 10px;
+            border-radius: 50px;
+        }
+
+        #motivationQuote {
+            color: #f0f0f0;
+            /* Changed weight from 600 to 400 for a thinner, cleaner look */
+            font-weight: 400;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            margin: 0;
+            /* Subtle letter spacing for a more sophisticated feel */
+            letter-spacing: 0.2px;
+        }
+
+        .insight-tag {
+            font-size: 0.6rem;
+            /* Thinned out the tag weight slightly as well */
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            color: var(--mango);
+            background: rgba(255, 193, 7, 0.1);
+            padding: 4px 10px;
+            border-radius: 50px;
+        }
+
+        .insight-container {
+            position: relative;
+            background: linear-gradient(145deg, #161616, #0f0f0f);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 26px; /* Increased padding slightly for more "breathing room" */
+            margin: 15px 0 25px 0;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* The "Decorative Blob" - adds depth and color without clutter */
+        .insight-blob {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 100px;
+            height: 100px;
+            background: var(--mango);
+            filter: blur(50px);
+            opacity: 0.15;
+            z-index: 1;
+        }
+
+        .insight-sparkle {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen">
+        <div class="loader-content">
+            <div class="logo-placeholder">🐾</div>
+            <h1 class="logo-text">Mangrow Paw</h1>
+            <div class="loading-container">
+                <div class="walking-cat" id="cat">🐈</div>
+                <div class="loading-bar">
+                    <div class="loading-progress"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <form id="form1" runat="server">
+        <div class="app-shell">
+            <div class="view-container">
+
+                <section id="homeView" class="view-section active">
+                    <h2 style="margin-bottom: 5px;">Hello, Paw! 🐾</h2>
+                    <div class="insight-container">
+                        <div class="insight-content">
+                            <div class="insight-header">
+                                <span class="insight-tag">DAILY MANTRA</span>
+                                <span class="insight-sparkle">✨</span>
+                            </div>
+                            <p id="motivationQuote">Loading a spark for you...</p>
+                        </div>
+                        <!-- Visual Decor -->
+                        <div class="insight-blob"></div>
+                    </div>
+                    <div class="bento-grid">
+                        <div class="tile tile-large" onclick="switchView('expenseView')">
+                            <span class="tile-label">Spending Distribution</span>
+                            <div class="dash-row">
+                                <div class="dash-chart-circle"><canvas id="dashDonut"></canvas></div>
+                                <div style="flex: 1;">
+                                    <div class="dash-main-val" id="dashTotalSpend">RM 0.00</div>
+                                    <small style="color: var(--text-dim)">Today's Total</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tile" onclick="switchView('activityView')">
+                            <span class="tile-label">Workout</span>
+                            <div class="dash-main-val" id="dashActivityMin">0m</div>
+                            <small id="dashActivityType" style="color: var(--text-dim)">Rest Day</small>
+                        </div>
+                        <div class="tile">
+                            <span class="tile-label">7-Day Trend</span>
+                            <canvas id="miniTrend" height="80"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="expenseView" class="view-section">
+                    <h2>Spending 💸</h2>
+                    <div class="tile tile-large">
+                        <input type="number" id="expAmt" placeholder="0.00" inputmode="decimal">
+                        <select id="expCat"><option>Meal</option><option>Transport</option><option>Entertainment</option><option>Others</option></select>
+                        <input type="text" id="expSub" placeholder="What exactly?">
+                        <button type="button" class="btn-mango" onclick="addExpense()">Record Expense</button>
+                    </div>
+                    <h3 style="margin: 25px 0 15px 0;">History</h3>
+                    <div id="expenseList"></div>
+                </section>
+
+                <section id="activityView" class="view-section">
+                    <h2>Activity 🏸</h2>
+                    <div class="pill-box">
+                        <div class="pill active" id="pTimer" onclick="toggleActMode('timer')">Live Timer</div>
+                        <div class="pill" id="pManual" onclick="toggleActMode('manual')">Manual Selection</div>
+                    </div>
+
+                    <div id="actTimerGroup">
+                        <div class="tile tile-large" id="actStartBox">
+                            <input type="text" id="actType" placeholder="Activity (e.g. Badminton)">
+                            <button type="button" class="btn-mango" onclick="startTimer()">Start Session</button>
+                        </div>
+                        <div class="tile tile-large" id="actRunningBox" style="display:none; text-align:center;">
+                            <span class="tile-label" id="runningLabel">RECORDING...</span>
+                            <div style="font-size: 3rem; font-weight: 800; color: var(--mango); margin: 10px 0 20px 0;" id="stopwatch">00:00:00</div>
+                            <button type="button" class="btn-mango" style="background: var(--accent-red); color: white;" onclick="stopTimer()">Finish & Save</button>
+                        </div>
+                    </div>
+
+                    <div id="actManualGroup" style="display:none;">
+                        <div class="tile tile-large">
+                            <input type="text" id="manType" placeholder="Activity (e.g. Football)">
+
+                            <small class="tile-label">Start Time</small>
+                            <div class="tp-wrapper">
+                                <div class="tp-col"><button type="button" class="tp-btn" onclick="adjT('sH',1)">+</button><span class="tp-val" id="sH">12</span><button type="button" class="tp-btn" onclick="adjT('sH',-1)">-</button></div>
+                                <span style="font-weight:bold">:</span>
+                                <div class="tp-col"><button type="button" class="tp-btn" onclick="adjT('sM',5)">+</button><span class="tp-val" id="sM">00</span><button type="button" class="tp-btn" onclick="adjT('sM',-5)">-</button></div>
+                                <div class="tp-ampm" id="sAP" onclick="togAP('sAP')">AM</div>
+                            </div>
+
+                            <small class="tile-label">End Time</small>
+                            <div class="tp-wrapper">
+                                <div class="tp-col"><button type="button" class="tp-btn" onclick="adjT('eH',1)">+</button><span class="tp-val" id="eH">12</span><button type="button" class="tp-btn" onclick="adjT('eH',-1)">-</button></div>
+                                <span style="font-weight:bold">:</span>
+                                <div class="tp-col"><button type="button" class="tp-btn" onclick="adjT('eM',5)">+</button><span class="tp-val" id="eM">00</span><button type="button" class="tp-btn" onclick="adjT('eM',-5)">-</button></div>
+                                <div class="tp-ampm" id="eAP" onclick="togAP('eAP')">AM</div>
+                            </div>
+
+                            <button type="button" class="btn-mango" onclick="logManualAct()">Save Activity</button>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 25px 0 15px 0;">Recent Workouts</h3>
+                    <div id="activityList"></div>
+                </section>
+
+                <section id="statsView" class="view-section">
+                    <h2>Insights 📊</h2>
+                    <div class="tile tile-large" style="margin-bottom: 15px;">
+                        <span class="tile-label">Total Category Split</span>
+                        <div style="height: 200px; margin-bottom: 20px;"><canvas id="statsPie"></canvas></div>
+                        <div id="statsTable"></div>
+                    </div>
+                    <div class="tile tile-large">
+                        <span class="tile-label">Activity Consistency (Mins)</span>
+                        <canvas id="statsBar" height="150"></canvas>
+                    </div>
+                </section>
+            </div>
+
+            <div id="editModal" class="modal-overlay">
+                <div class="modal-body">
+                    <span class="modal-close" onclick="closeEditModal()">×</span>
+                    <h3 id="editModalTitle">Edit Entry</h3>
+                    <div id="editModalFields"></div>
+                    <button type="button" class="btn-mango" onclick="saveEdit()">Update Entry</button>
+                </div>
+            </div>
+
+            <nav class="nav-bar">
+                <div class="nav-link active" onclick="switchView('homeView')"><span class="nav-icon">🏠</span>Home</div>
+                <div class="nav-link" onclick="switchView('expenseView')"><span class="nav-icon">💸</span>Spend</div>
+                <div class="nav-link" onclick="switchView('activityView')"><span class="nav-icon">🏸</span>Activity</div>
+                <div class="nav-link" onclick="switchView('statsView')"><span class="nav-icon">📊</span>Stats</div>
+            </nav>
+        </div>
+    </form>
+
+    <script>
+        window.addEventListener('load', () => {
+            const quotes = [
+                "Small steps still move you forward. 🐾",
+                "You don't have to be perfect to be amazing.",
+                "Your track record for getting through tough days is 100%.",
+                "Take it one 'Paw' at a time.",
+                "Be gentle with yourself. You're doing the best you can.",
+                "Focus on the step, not the whole staircase.",
+                "Don't believe everything you think, especially the negative stuff.",
+                "Progress is not a straight line. It's okay to have off days.",
+                "You are much more than your productivity or your mood.",
+                "Stay curious. Tomorrow might surprise you."
+            ];
+
+            function setRandomQuote() {
+                const quoteElement = document.getElementById('motivationQuote');
+                const randomIndex = Math.floor(Math.random() * quotes.length);
+                quoteElement.innerText = quotes[randomIndex];
+            }
+
+            // Call this function so it runs as soon as the page starts loading
+            setRandomQuote();
+            const loader = document.getElementById('loadingScreen');
+
+            // We give it a slight delay (2.5s) so the "walking" animation finishes
+            setTimeout(() => {
+                loader.classList.add('loader-hidden');
+            }, 2800);
+        });
+        Chart.register(ChartDataLabels);
+        let db = {
+            expenses: JSON.parse(localStorage.getItem('mp_exp')) || [],
+            workouts: JSON.parse(localStorage.getItem('mp_fit')) || []
+        };
+        const cats = ['Meal', 'Transport', 'Entertainment', 'Others'];
+        const colors = ['#FFC107', '#4CAF50', '#2196F3', '#9C27B0'];
+
+        let editTarget = null;
+
+        function formatDuration(mins) {
+            if (mins <= 0) return "0m";
+            if (mins < 60) return mins + "m";
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            return m > 0 ? `${h}h ${m}m` : `${h}h`;
+        }
+
+        // Helper to convert 12h picker format to a standard Time Object
+        function getTimeData(h, m, ap) {
+            let hh = parseInt(h);
+            if (ap === 'PM' && hh < 12) hh += 12;
+            if (ap === 'AM' && hh === 12) hh = 0;
+            return { h: hh, m: parseInt(m), display: `${h}:${m} ${ap}` };
+        }
+
+        // Helper to convert 24h back to 12h picker values
+        function convert24To12(h24, m24) {
+            let ap = h24 >= 12 ? 'PM' : 'AM';
+            let h12 = h24 % 12 || 12;
+            return { h: h12.toString().padStart(2, '0'), m: m24.toString().padStart(2, '0'), ap };
+        }
+
+        function adjT(id, v) {
+            let el = document.getElementById(id);
+            let curr = parseInt(el.innerText);
+            let max = id.includes('H') ? 12 : 55, min = id.includes('H') ? 1 : 0;
+            curr += v;
+            if (curr > max) curr = min; if (curr < min) curr = max;
+            el.innerText = curr.toString().padStart(2, '0');
+        }
+
+        function togAP(id) { let el = document.getElementById(id); el.innerText = el.innerText === 'AM' ? 'PM' : 'AM'; }
+
+        function switchView(id) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            if (event && event.currentTarget.classList.contains('nav-link')) {
+                event.currentTarget.classList.add('active');
+            }
+            refreshVisuals();
+        }
+
+        function addExpense() {
+            const amtInput = document.getElementById('expAmt');
+            const subInput = document.getElementById('expSub');
+            const amt = parseFloat(amtInput.value);
+            if (!amt || amt <= 0) return;
+
+            db.expenses.push({
+                id: Date.now(),
+                amt: amt,
+                cat: document.getElementById('expCat').value,
+                sub: subInput.value || 'Expense',
+                date: new Date().toLocaleDateString()
+            });
+            saveAndRender();
+            amtInput.value = ''; subInput.value = '';
+        }
+
+        function deleteExp(id) {
+            if (confirm('Remove this expense?')) {
+                db.expenses = db.expenses.filter(e => e.id !== id);
+                saveAndRender();
+            }
+        }
+
+        function openEdit(id, type) {
+            editTarget = { id, type };
+            const fields = document.getElementById('editModalFields');
+            const title = document.getElementById('editModalTitle');
+
+            if (type === 'expense') {
+                const item = db.expenses.find(e => e.id === id);
+                title.innerText = "Edit Spending";
+                fields.innerHTML = `
+                        <input type="number" id="editVal1" value="${item.amt}" step="0.01">
+                        <select id="editVal2">${cats.map(c => `<option ${c === item.cat ? 'selected' : ''}>${c}</option>`).join('')}</select>
+                        <input type="text" id="editVal3" value="${item.sub}">
+                    `;
+            } else {
+                const item = db.workouts.find(w => w.id === id);
+                title.innerText = "Edit Activity";
+
+                // Get pre-existing times if they exist, else default
+                let s = item.startTime || { h: 12, m: 0, ap: 'AM' };
+                let e = item.endTime || { h: 12, m: 0, ap: 'AM' };
+                let startP = convert24To12(s.h, s.m);
+                let endP = convert24To12(e.h, e.m);
+
+                fields.innerHTML = `
+                        <input type="text" id="editVal1" value="${item.type}" placeholder="Activity name">
+                        <small class="tile-label">Start Time</small>
+                        <div class="tp-wrapper">
+                            <div class="tp-col"><button type="button" class="tp-btn" onclick="adjT('edSH',1)">+</button><span class="tp-val" id="edSH">${startP.h}</span><button type="button" class="tp-btn" onclick="adjT('edSH',-1)">-</button></div>
+                            <span style="font-weight:bold">:</span>
+                            <div class="tp-col"><button type="button" class="tp-btn" onclick="adjT('edSM',5)">+</button><span class="tp-val" id="edSM">${startP.m}</span><button type="button" class="tp-btn" onclick="adjT('edSM',-5)">-</button></div>
+                            <div class="tp-ampm" id="edSAP" onclick="togAP('edSAP')">${startP.ap}</div>
+                        </div>
+                        <small class="tile-label">End Time</small>
+                        <div class="tp-wrapper">
+                            <div class="tp-col"><button type="button" class="tp-btn" onclick="adjT('edEH',1)">+</button><span class="tp-val" id="edEH">${endP.h}</span><button type="button" class="tp-btn" onclick="adjT('edEH',-1)">-</button></div>
+                            <span style="font-weight:bold">:</span>
+                            <div class="tp-col"><button type="button" class="tp-btn" onclick="adjT('edEM',5)">+</button><span class="tp-val" id="edEM">${endP.m}</span><button type="button" class="tp-btn" onclick="adjT('edEM',-5)">-</button></div>
+                            <div class="tp-ampm" id="edEAP" onclick="togAP('edEAP')">${endP.ap}</div>
+                        </div>
+                    `;
+            }
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+
+        function saveEdit() {
+            if (editTarget.type === 'expense') {
+                const idx = db.expenses.findIndex(e => e.id === editTarget.id);
+                db.expenses[idx].amt = parseFloat(document.getElementById('editVal1').value);
+                db.expenses[idx].cat = document.getElementById('editVal2').value;
+                db.expenses[idx].sub = document.getElementById('editVal3').value;
+            } else {
+                const idx = db.workouts.findIndex(w => w.id === editTarget.id);
+                const s = getTimeData(document.getElementById('edSH').innerText, document.getElementById('edSM').innerText, document.getElementById('edSAP').innerText);
+                const e = getTimeData(document.getElementById('edEH').innerText, document.getElementById('edEM').innerText, document.getElementById('edEAP').innerText);
+
+                let sd = new Date(); sd.setHours(s.h, s.m, 0, 0);
+                let ed = new Date(); ed.setHours(e.h, e.m, 0, 0);
+                if (ed <= sd) ed.setDate(ed.getDate() + 1);
+
+                db.workouts[idx].type = document.getElementById('editVal1').value;
+                db.workouts[idx].duration = Math.round((ed - sd) / 60000);
+                db.workouts[idx].startTime = s;
+                db.workouts[idx].endTime = e;
+            }
+            saveAndRender();
+            closeEditModal();
+        }
+
+        function toggleActMode(mode) {
+            document.getElementById('pTimer').classList.toggle('active', mode === 'timer');
+            document.getElementById('pManual').classList.toggle('active', mode === 'manual');
+            document.getElementById('actTimerGroup').style.display = mode === 'timer' ? 'block' : 'none';
+            document.getElementById('actManualGroup').style.display = mode === 'manual' ? 'block' : 'none';
+        }
+
+        let timerInt, startT, liveStartTime;
+        function startTimer() {
+            const type = document.getElementById('actType').value || "Activity";
+            document.getElementById('runningLabel').innerText = `TRAINING: ${type.toUpperCase()}`;
+            document.getElementById('actStartBox').style.display = 'none';
+            document.getElementById('actRunningBox').style.display = 'block';
+            startT = Date.now();
+            let d = new Date();
+            liveStartTime = { h: d.getHours(), m: d.getMinutes(), display: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+
+            timerInt = setInterval(() => {
+                let diff = Date.now() - startT;
+                document.getElementById('stopwatch').innerText = new Date(diff).toISOString().substr(11, 8);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInt);
+            let mins = Math.max(1, Math.round((Date.now() - startT) / 60000));
+            let d = new Date();
+            let liveEndTime = { h: d.getHours(), m: d.getMinutes(), display: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+
+            db.workouts.push({
+                id: Date.now(),
+                type: document.getElementById('actType').value || "Activity",
+                duration: mins,
+                date: new Date().toLocaleDateString(),
+                startTime: liveStartTime,
+                endTime: liveEndTime
+            });
+            document.getElementById('actStartBox').style.display = 'block';
+            document.getElementById('actRunningBox').style.display = 'none';
+            document.getElementById('stopwatch').innerText = "00:00:00";
+            saveAndRender();
+        }
+
+        function logManualAct() {
+            const t = document.getElementById('manType').value || "Activity";
+            const s = getTimeData(document.getElementById('sH').innerText, document.getElementById('sM').innerText, document.getElementById('sAP').innerText);
+            const e = getTimeData(document.getElementById('eH').innerText, document.getElementById('eM').innerText, document.getElementById('eAP').innerText);
+
+            let sd = new Date(); sd.setHours(s.h, s.m, 0, 0);
+            let ed = new Date(); ed.setHours(e.h, e.m, 0, 0);
+            if (ed <= sd) ed.setDate(ed.getDate() + 1);
+
+            let diff = Math.round((ed - sd) / 60000);
+            db.workouts.push({
+                id: Date.now(), type: t, duration: diff, date: new Date().toLocaleDateString(),
+                startTime: s, endTime: e
+            });
+            saveAndRender();
+            document.getElementById('manType').value = '';
+            alert(`Logged ${formatDuration(diff)}!`);
+        }
+
+        function deleteAct(id) {
+            if (confirm('Delete workout record?')) {
+                db.workouts = db.workouts.filter(w => w.id !== id);
+                saveAndRender();
+            }
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('mp_exp', JSON.stringify(db.expenses));
+            localStorage.setItem('mp_fit', JSON.stringify(db.workouts));
+            renderLists();
+            refreshVisuals();
+        }
+
+        let chDash, chStats, chBar;
+        function refreshVisuals() {
+            const today = new Date().toLocaleDateString();
+            const todayExps = db.expenses.filter(e => e.date === today);
+            const total = todayExps.reduce((a, b) => a + b.amt, 0);
+            document.getElementById('dashTotalSpend').innerText = `RM ${total.toFixed(2)}`;
+            const todayAct = db.workouts.filter(w => w.date === today);
+            const totalMins = todayAct.reduce((a, b) => a + b.duration, 0);
+            document.getElementById('dashActivityMin').innerText = formatDuration(totalMins);
+            document.getElementById('dashActivityType').innerText = todayAct.length > 0 ? todayAct[0].type : 'Rest Day';
+
+            if (chDash) chDash.destroy();
+            const todayVals = cats.map(c => todayExps.filter(e => e.cat === c).reduce((a, b) => a + b.amt, 0));
+            chDash = new Chart(document.getElementById('dashDonut'), {
+                type: 'doughnut',
+                data: { datasets: [{ data: total > 0 ? todayVals : [1], backgroundColor: total > 0 ? colors : ['#1a1a1a'], borderWidth: 0 }] },
+                options: { cutout: '78%', plugins: { datalabels: { display: false }, tooltip: { enabled: false } } }
+            });
+
+            if (document.getElementById('statsView').classList.contains('active')) {
+                if (chStats) chStats.destroy();
+                const allExpsTotal = db.expenses.reduce((a, b) => a + b.amt, 0);
+                const allVals = cats.map(c => db.expenses.filter(e => e.cat === c).reduce((a, b) => a + b.amt, 0));
+                chStats = new Chart(document.getElementById('statsPie'), {
+                    type: 'pie',
+                    data: { labels: cats, datasets: [{ data: allVals, backgroundColor: colors, borderWidth: 0 }] },
+                    options: { maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold', size: 10 }, formatter: (v) => (allExpsTotal > 0 && v > 0) ? (v / allExpsTotal * 100).toFixed(0) + '%' : '' } } }
+                });
+                document.getElementById('statsTable').innerHTML = cats.map((c, i) => `
+                    <div class="stats-legend-row">
+                        <span><span class="color-dot" style="background:${colors[i]}"></span>${c}</span>
+                        <span style="font-weight:700">RM ${allVals[i].toFixed(2)}</span>
+                    </div>`).join('');
+
+                if (chBar) chBar.destroy();
+                const last7 = [...Array(7)].map((_, i) => { let d = new Date(); d.setDate(d.getDate() - i); return d.toLocaleDateString(); }).reverse();
+                const fitData = last7.map(d => db.workouts.filter(w => w.date === d).reduce((a, b) => a + b.duration, 0));
+                chBar = new Chart(document.getElementById('statsBar'), {
+                    type: 'bar',
+                    data: { labels: ['6d', '5d', '4d', '3d', '2d', '1d', 'Today'], datasets: [{ data: fitData, backgroundColor: '#FFC107', borderRadius: 6 }] },
+                    options: { plugins: { datalabels: { anchor: 'end', align: 'top', color: '#888', font: { size: 9 } } }, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: '#444' } } } }
+                });
+            }
+        }
+
+        function renderLists() {
+            document.getElementById('expenseList').innerHTML = db.expenses.slice().reverse().map(e => `
+                <div class="log-card">
+                    <div class="log-meta"><strong>${e.sub}</strong><small>${e.cat} • ${e.date}</small></div>
+                    <div class="actions">
+                        <span style="font-weight:700">RM ${e.amt.toFixed(2)}</span>
+                        <div class="action-btns">
+                            <button type="button" class="btn-edit" onclick="openEdit(${e.id}, 'expense')">✎</button>
+                            <button type="button" class="btn-act" style="color:var(--accent-red)" onclick="deleteExp(${e.id})">×</button>
+                        </div>
+                    </div>
+                </div>`).join('');
+
+            document.getElementById('activityList').innerHTML = db.workouts.slice().reverse().map(w => `
+                <div class="log-card">
+                    <div class="log-meta"><strong>${w.type}</strong><small>${w.date}</small></div>
+                    <div class="actions">
+                        <span style="font-weight:700; color:var(--accent-blue)">${formatDuration(w.duration)}</span>
+                        <span class="time-label-small">${w.startTime ? (w.startTime.display + ' - ' + w.endTime.display) : ''}</span>
+                        <div class="action-btns">
+                            <button type="button" class="btn-edit" onclick="openEdit(${w.id}, 'activity')">✎</button>
+                            <button type="button" class="btn-act" style="color:var(--accent-red)" onclick="deleteAct(${w.id})">×</button>
+                        </div>
+                    </div>
+                </div>`).join('');
+        }
+
+        renderLists();
+        refreshVisuals();
+    </script>ipt>
+</body>
+</html>
