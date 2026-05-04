@@ -77,7 +77,7 @@
         .view-container {
             flex: 1;
             overflow-y: auto;
-            padding: 30px 20px 160px 20px;
+            padding: 60px 20px 160px 20px;
             scroll-behavior: smooth;
         }
 
@@ -127,8 +127,10 @@
             }
 
         .tile-large {
-            grid-column: span 2;
-            min-height: 220px; /* bigger widgets like charts */
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* 👈 THIS is the key */
         }
 
         .tile-label {
@@ -334,6 +336,7 @@
             display: flex;
             justify-content: space-between;
             padding: 12px 5px;
+            gap: 10px;
             border-bottom: 1px solid var(--border);
             font-size: 0.9rem;
         }
@@ -721,6 +724,14 @@
                 color: #000;
                 font-weight: 700;
             }
+
+        #statsView .tile {
+            margin-bottom: 16px;
+        }
+        #statsView canvas {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -761,7 +772,28 @@
                         <div class="insight-blob"></div>
                     </div>
                     <div class="bento-grid">
+                        <div class="tile" onclick="openMoodModal()">
+                            <span class="tile-label">Mood Today</span>
+                            <div class="dash-main-val" id="dashMood">🙂</div>
+                            <small style="color:var(--text-dim)">Tap to log</small>
+                        </div>
+                        <div id="moodModal" class="modal-overlay">
+                            <div class="modal-body" style="text-align:center;">
+                                <span class="modal-close" onclick="closeMoodModal()">×</span>
 
+                                <h3>How are you feeling today?</h3>
+
+                                <div style="display:flex; justify-content:space-between; font-size:2rem; margin:20px 0;">
+                                    <span onclick="selectMood(1)">😞</span>
+                                    <span onclick="selectMood(2)">😐</span>
+                                    <span onclick="selectMood(3)">🙂</span>
+                                    <span onclick="selectMood(4)">😄</span>
+                                    <span onclick="selectMood(5)">🔥</span>
+                                </div>
+
+                                <button class="btn-mango" onclick="saveMood()">Save Mood</button>
+                            </div>
+                        </div>
                         <!-- Top Row: Spending + Workout -->
                         <div class="tile" onclick="switchView('expenseView')" style="position:relative;">
                             <span class="tile-label">Spending</span>
@@ -877,6 +909,10 @@
                         <span class="tile-label">Activity Consistency (Mins)</span>
                         <canvas id="statsBar" height="150"></canvas>
                     </div>
+                    <div class="tile tile-large">
+                        <span class="tile-label">Mood (Last 7 Days)</span>
+                        <canvas id="moodChart" height="120"></canvas>
+                    </div>
                 </section>
             </div>
             <div id="editModal" class="modal-overlay">
@@ -899,6 +935,20 @@
                     <div id="habitStreakInfo" style="margin-bottom:15px; color: var(--text-dim);"></div>
 
                     <div id="habitCalendar"></div>
+                </div>
+            </div>
+
+            <div id="confirmModal" class="modal-overlay">
+                <div class="modal-body" style="text-align:center;">
+                    <h3 id="confirmTitle">Are you sure?</h3>
+                    <p id="confirmMessage" style="color: var(--text-dim); margin:10px 0 20px;">
+                        This action cannot be undone.
+                    </p>
+
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-mango" style="background:var(--border); color:white;" onclick="closeConfirm()">Cancel</button>
+                        <button class="btn-mango" style="background:var(--accent-red); color:white;" id="confirmBtn">Delete</button>
+                    </div>
                 </div>
             </div>
 
@@ -971,7 +1021,8 @@
         let db = {
             expenses: JSON.parse(localStorage.getItem('mp_exp')) || [],
             workouts: JSON.parse(localStorage.getItem('mp_fit')) || [],
-            habits: JSON.parse(localStorage.getItem('mp_habits')) || []
+            habits: JSON.parse(localStorage.getItem('mp_habits')) || [],
+            moods: JSON.parse(localStorage.getItem('mp_mood')) || []
         };
         const cats = ['Meal', 'Transport', 'Entertainment', 'Others'];
         const colors = ['#FFC107', '#4CAF50', '#2196F3', '#9C27B0'];
@@ -1042,10 +1093,10 @@
         }
 
         function deleteExp(id) {
-            if (confirm('Remove this expense?')) {
+            openConfirm('Remove this expense?', () => {
                 db.expenses = db.expenses.filter(e => e.id !== id);
                 saveAndRender();
-            }
+            });
         }
 
         function openEdit(id, type) {
@@ -1204,10 +1255,10 @@
         }
 
         function deleteAct(id) {
-            if (confirm('Delete workout record?')) {
+            openConfirm('Delete workout record?', () => {
                 db.workouts = db.workouts.filter(w => w.id !== id);
                 saveAndRender();
-            }
+            });
         }
 
         function saveAndRender() {
@@ -1223,25 +1274,32 @@
 
         let chDash, chStats, chBar;
         let homeBar;
+        let moodChart;
 
         function refreshVisuals() {
-
             const today = new Date().toLocaleDateString();
 
             // =========================
-            // DASHBOARD EXPENSE + ACTIVITY
+            // MOOD (DASHBOARD)
+            // =========================
+            const moodMap = ["😞", "😐", "🙂", "😄", "🔥"];
+            const moodToday = db.moods.find(m => m.date === today);
+
+            document.getElementById('dashMood').innerText =
+                moodToday ? moodMap[moodToday.value - 1] : "🙂";
+
+            // =========================
+            // TODAY DATA
             // =========================
             const todayExps = db.expenses.filter(e => e.date === today);
-            const total = todayExps.reduce((a, b) => a + b.amt, 0);
+            const todayActs = db.workouts.filter(w => w.date === today);
 
-            
+            const totalExpense = todayExps.reduce((a, b) => a + b.amt, 0);
+            const totalMinutes = todayActs.reduce((a, b) => a + b.duration, 0);
 
-            const todayAct = db.workouts.filter(w => w.date === today);
-            const totalMins = todayAct.reduce((a, b) => a + b.duration, 0);
-
-            document.getElementById('dashActivityMin').innerText = formatDuration(totalMins);
+            document.getElementById('dashActivityMin').innerText = formatDuration(totalMinutes);
             document.getElementById('dashActivityType').innerText =
-                todayAct.length > 0 ? todayAct[0].type : 'Rest Day';
+                todayActs.length > 0 ? todayActs[0].type : 'Rest Day';
 
             // =========================
             // DONUT CHART (EXPENSE)
@@ -1257,16 +1315,16 @@
             chDash = new Chart(document.getElementById('dashDonut'), {
                 type: 'doughnut',
                 data: {
-                    labels: total > 0 ? cats : ['No Data'],
+                    labels: totalExpense > 0 ? cats : ['No Data'],
                     datasets: [{
-                        data: total > 0 ? todayVals : [1],
-                        backgroundColor: total > 0 ? colors : ['#1a1a1a'],
+                        data: totalExpense > 0 ? todayVals : [1],
+                        backgroundColor: totalExpense > 0 ? colors : ['#1a1a1a'],
                         borderWidth: 0
                     }]
                 },
                 options: {
                     cutout: '78%',
-                    centerText: total > 0 ? `RM ${total.toFixed(2)}` : 'No Spend',
+                    centerText: totalExpense > 0 ? `RM ${totalExpense.toFixed(2)}` : 'No Spend',
                     plugins: {
                         datalabels: { display: false },
                         tooltip: { enabled: false },
@@ -1276,17 +1334,20 @@
             });
 
             // =========================
-            // HOME ACTIVITY (7-DAY BAR)
+            // LAST 7 DAYS (SHARED)
             // =========================
-            if (homeBar) homeBar.destroy();
-
-            const last7 = [...Array(7)].map((_, i) => {
+            const last7Days = [...Array(7)].map((_, i) => {
                 let d = new Date();
                 d.setDate(d.getDate() - i);
                 return d.toLocaleDateString();
             }).reverse();
 
-            const fitData = last7.map(d =>
+            // =========================
+            // HOME ACTIVITY BAR
+            // =========================
+            if (homeBar) homeBar.destroy();
+
+            const fitData = last7Days.map(d =>
                 db.workouts
                     .filter(w => w.date === d)
                     .reduce((a, b) => a + b.duration, 0)
@@ -1322,111 +1383,146 @@
             });
 
             // =========================
-            // STATS VIEW ONLY (OPTIMIZED)
+            // STATS VIEW ONLY
             // =========================
-            if (document.getElementById('statsView').classList.contains('active')) {
+            const statsView = document.getElementById('statsView');
+            if (!statsView || !statsView.classList.contains('active')) return;
 
-                if (chStats) chStats.destroy();
+            // PIE CHART
+            if (chStats) chStats.destroy();
 
-                const todayExpenses = db.expenses.filter(e => e.date === today);
+            const statsVals = cats.map(c =>
+                todayExps
+                    .filter(e => e.cat === c)
+                    .reduce((a, b) => a + b.amt, 0)
+            );
 
-                const allVals = cats.map(c =>
-                    todayExpenses
-                        .filter(e => e.cat === c)
-                        .reduce((a, b) => a + b.amt, 0)
-                );
+            const totalStats = statsVals.reduce((a, b) => a + b, 0);
 
-                const allExpsTotal = todayExpenses.reduce((a, b) => a + b.amt, 0);
-                const totalAll = allVals.reduce((a, b) => a + b, 0);
-
-                chStats = new Chart(document.getElementById('statsPie'), {
-                    type: 'pie',
-                    data: {
-                        labels: cats,
-                        datasets: [{
-                            data: allVals,
-                            backgroundColor: colors,
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            datalabels: {
-                                color: '#fff',
-                                font: { weight: 'bold', size: 10 },
-                                formatter: (v) =>
-                                    (allExpsTotal > 0 && v > 0)
-                                        ? (v / allExpsTotal * 100).toFixed(0) + '%'
-                                        : ''
-                            }
+            chStats = new Chart(document.getElementById('statsPie'), {
+                type: 'pie',
+                data: {
+                    labels: cats,
+                    datasets: [{
+                        data: statsVals,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: v =>
+                                totalStats > 0 && v > 0
+                                    ? (v / totalStats * 100).toFixed(0) + '%'
+                                    : ''
                         }
                     }
-                });
+                }
+            });
 
-                document.getElementById('statsTable').innerHTML =
-                    cats.map((c, i) => `
-                <div class="stats-legend-row">
-                    <span>
-                        <span class="color-dot" style="background:${colors[i]}"></span>
-                        ${c}
-                    </span>
-                    <span style="font-weight:700">RM ${allVals[i].toFixed(2)}</span>
-                </div>
-            `).join('') +
+            // TABLE
+            document.getElementById('statsTable').innerHTML =
+                cats.map((c, i) => `
+            <div class="stats-legend-row">
+                <span>
+                    <span class="color-dot" style="background:${colors[i]}"></span>
+                    ${c}
+                </span>
+                <span style="font-weight:700">RM ${statsVals[i].toFixed(2)}</span>
+            </div>
+        `).join('') +
+                `
+        <div class="stats-legend-row" style="border-top:1px solid var(--border); margin-top:8px; padding-top:12px;">
+            <span style="font-weight:800">Total</span>
+            <span style="font-weight:800; color:var(--mango)">RM ${totalStats.toFixed(2)}</span>
+        </div>
+        `;
 
-                    `
-                <div class="stats-legend-row" style="border-top:1px solid var(--border); margin-top:8px; padding-top:12px;">
-                    <span style="font-weight:800">Total</span>
-                    <span style="font-weight:800; color:var(--mango)">RM ${totalAll.toFixed(2)}</span>
-                </div>
-            `;
+            // ACTIVITY BAR (STATS)
+            if (chBar) chBar.destroy();
 
-                if (chBar) chBar.destroy();
+            const fitStats = last7Days.map(d =>
+                db.workouts
+                    .filter(w => w.date === d)
+                    .reduce((a, b) => a + b.duration, 0)
+            );
 
-                const last7Stats = [...Array(7)].map((_, i) => {
-                    let d = new Date();
-                    d.setDate(d.getDate() - i);
-                    return d.toLocaleDateString();
-                }).reverse();
-
-                const fitDataStats = last7Stats.map(d =>
-                    db.workouts
-                        .filter(w => w.date === d)
-                        .reduce((a, b) => a + b.duration, 0)
-                );
-
-                chBar = new Chart(document.getElementById('statsBar'), {
-                    type: 'bar',
-                    data: {
-                        labels: ['6d', '5d', '4d', '3d', '2d', '1d', 'Today'],
-                        datasets: [{
-                            data: fitDataStats,
-                            backgroundColor: '#FFC107',
-                            borderRadius: 6
-                        }]
+            chBar = new Chart(document.getElementById('statsBar'), {
+                type: 'bar',
+                data: {
+                    labels: ['6d', '5d', '4d', '3d', '2d', '1d', 'Today'],
+                    datasets: [{
+                        data: fitStats,
+                        backgroundColor: '#FFC107',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#888',
+                            font: { size: 9 }
+                        }
                     },
-                    options: {
-                        plugins: {
-                            datalabels: {
-                                anchor: 'end',
-                                align: 'top',
-                                color: '#888',
-                                font: { size: 9 }
+                    scales: {
+                        y: { display: false },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#444' }
+                        }
+                    }
+                }
+            });
+
+            // =========================
+            // MOOD CHART (FIXED)
+            // =========================
+            if (moodChart) moodChart.destroy();
+
+            const moodData = last7Days.map(d => {
+                const m = db.moods.find(x => x.date === d);
+                return m ? m.value : null;
+            });
+
+            moodChart = new Chart(document.getElementById('moodChart'), {
+                type: 'line',
+                data: {
+                    labels: ['6d', '5d', '4d', '3d', '2d', '1d', 'Today'],
+                    datasets: [{
+                        data: moodData,
+                        tension: 0.4,
+                        borderWidth: 2,
+                        fill: false,
+                        spanGaps: true
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            min: 1,
+                            max: 5,
+                            ticks: {
+                                callback: v => ["", "😞", "😐", "🙂", "😄", "🔥"][v]
                             }
                         },
-                        scales: {
-                            y: { display: false },
-                            x: {
-                                grid: { display: false },
-                                ticks: { color: '#444' }
-                            }
-                        }
+                        x: { ticks: { color: '#444' } }
+                    },
+                    plugins: {
+                        legend: { display: false }
                     }
-                });
-            }
+                }
+            });
         }
+        
+            
+        
 
         function renderLists() {
             document.getElementById('expenseList').innerHTML = db.expenses.slice().reverse().map(e => `
@@ -1602,9 +1698,10 @@
         let habitEditTarget = null;
 
         function deleteHabit(id) {
-            if (!confirm("Delete this habit?")) return;
-            db.habits = db.habits.filter(h => h.id !== id);
-            saveAndRender();
+            openConfirm('Delete this habit?', () => {
+                db.habits = db.habits.filter(h => h.id !== id);
+                saveAndRender();
+            });
         }
 
         function openEditHabit(id) {
@@ -1687,6 +1784,57 @@
     `;
             }).join('');
         }
+
+
+        let confirmCallback = null;
+
+        function openConfirm(message, callback) {
+            document.getElementById('confirmMessage').innerText = message;
+            confirmCallback = callback;
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirmModal').classList.remove('show');
+            confirmCallback = null;
+        }
+
+        document.getElementById('confirmBtn').onclick = function () {
+            if (confirmCallback) confirmCallback();
+            closeConfirm();
+        };
+
+        let selectedMood = 3;
+
+        function openMoodModal() {
+            document.getElementById('moodModal').classList.add('show');
+        }
+
+        function closeMoodModal() {
+            document.getElementById('moodModal').classList.remove('show');
+        }
+
+        function selectMood(val) {
+            selectedMood = val;
+        }
+
+        function saveMood() {
+            const today = new Date().toLocaleDateString();
+
+            // replace if already exists
+            db.moods = db.moods.filter(m => m.date !== today);
+
+            db.moods.push({
+                date: today,
+                value: selectedMood
+            });
+
+            localStorage.setItem('mp_mood', JSON.stringify(db.moods));
+
+            closeMoodModal();
+            refreshVisuals();
+        }
+
         renderHomeHabits();
         renderLists();
         renderHabits();
