@@ -1284,6 +1284,7 @@
             localStorage.setItem('mp_exp', JSON.stringify(db.expenses));
             localStorage.setItem('mp_fit', JSON.stringify(db.workouts));
             localStorage.setItem('mp_habits', JSON.stringify(db.habits));
+            localStorage.setItem('mp_mood', JSON.stringify(db.moods));
 
             renderLists();
             renderHabits();
@@ -1359,7 +1360,7 @@
             const last7Days = [...Array(7)].map((_, i) => {
                 let d = new Date();
                 d.setDate(d.getDate() - i);
-                return d.toLocaleDateString();
+                return d.toISOString().split('T')[0];
             }).reverse();
 
             // =========================
@@ -1769,7 +1770,7 @@
 
             for (let d = 1; d <= lastDay.getDate(); d++) {
                 const dateObj = new Date(year, month, d);
-                const dateStr = dateObj.toLocaleDateString();
+                const dateStr = dateObj.toISOString().split('T')[0];
 
                 const done = h.logs.includes(dateStr);
 
