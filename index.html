@@ -905,6 +905,25 @@
                         <div style="height: 200px; margin-bottom: 20px;"><canvas id="statsPie"></canvas></div>
                         <div id="statsTable"></div>
                     </div>
+                    <div class="tile tile-large" style="margin-bottom:15px;">
+                        <span class="tile-label">Weekly Spending Overview</span>
+
+                        <div style="margin-bottom:15px;">
+                            <div style="
+            font-size:2rem;
+            font-weight:800;
+            color:var(--mango);
+        " id="weeklySpendTotal">
+                                RM 0.00
+                            </div>
+
+                            <small style="color:var(--text-dim)">
+                                Total spent over the last 7 days
+                            </small>
+                        </div>
+
+                        <canvas id="weeklySpendChart" height="140"></canvas>
+                    </div>
                     <div class="tile tile-large">
                         <span class="tile-label">Activity Consistency (Mins)</span>
                         <canvas id="statsBar" height="150"></canvas>
@@ -1086,7 +1105,7 @@
                 amt: amt,
                 cat: document.getElementById('expCat').value,
                 sub: subInput.value || 'Expense',
-                date: new Date().toLocaleDateString()
+                date: new Date().toISOString().split('T')[0]
             });
             saveAndRender();
             amtInput.value = ''; subInput.value = '';
@@ -1225,7 +1244,7 @@
                 id: Date.now(),
                 type: document.getElementById('actType').value || "Activity",
                 duration: mins,
-                date: new Date().toLocaleDateString(),
+                date: new Date().toISOString().split('T')[0],
                 startTime: liveStartTime,
                 endTime: liveEndTime
             });
@@ -1246,7 +1265,7 @@
 
             let diff = Math.round((ed - sd) / 60000);
             db.workouts.push({
-                id: Date.now(), type: t, duration: diff, date: new Date().toLocaleDateString(),
+                id: Date.now(), type: t, duration: diff, date: new Date().toISOString().split('T')[0],
                 startTime: s, endTime: e
             });
             saveAndRender();
@@ -1275,9 +1294,10 @@
         let chDash, chStats, chBar;
         let homeBar;
         let moodChart;
+        let weeklySpendChart;
 
         function refreshVisuals() {
-            const today = new Date().toLocaleDateString();
+            const today = new Date().toISOString().split('T')[0];
 
             // =========================
             // MOOD (DASHBOARD)
@@ -1528,6 +1548,73 @@
                     }
                 }
             });
+
+            // =========================
+            // WEEKLY SPENDING CHART
+            // =========================
+            if (weeklySpendChart) weeklySpendChart.destroy();
+
+            const weeklySpendData = last7Days.map(d =>
+                db.expenses
+                    .filter(e => e.date === d)
+                    .reduce((a, b) => a + b.amt, 0)
+            );
+
+            const weeklyTotal = weeklySpendData.reduce((a, b) => a + b, 0);
+
+            document.getElementById('weeklySpendTotal').innerText =
+                `RM ${weeklyTotal.toFixed(2)}`;
+
+            weeklySpendChart = new Chart(document.getElementById('weeklySpendChart'), {
+                type: 'line',
+                data: {
+                    labels: ['6d', '5d', '4d', '3d', '2d', '1d', 'Today'],
+                    datasets: [{
+                        data: weeklySpendData,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        borderColor: '#FFC107',
+                        backgroundColor: 'rgba(255,193,7,0.15)',
+                        fill: true,
+
+                        pointBackgroundColor: '#FFC107',
+                        pointBorderColor: '#FFC107',
+                        pointRadius: 5,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            align: 'top',
+                            anchor: 'end',
+                            color: '#888',
+                            formatter: v => v > 0 ? `RM${v}` : ''
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#666',
+                                callback: value => 'RM' + value
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#666'
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
         }
         
             
@@ -1580,7 +1667,7 @@
         }
 
         function toggleHabitDone(id) {
-            const today = new Date().toLocaleDateString();
+            const today = new Date().toISOString().split('T')[0];
             const habit = db.habits.find(h => h.id === id);
 
             if (!habit) return;
@@ -1597,15 +1684,20 @@
 
         function getStreak(habit) {
             let streak = 0;
-            let d = new Date();
+
+            const current = new Date();
 
             while (true) {
-                const dateStr = d.toLocaleDateString();
+                const dateStr = current.toISOString().split('T')[0];
+
                 if (habit.logs.includes(dateStr)) {
                     streak++;
-                    d.setDate(d.getDate() - 1);
-                } else break;
+                    current.setDate(current.getDate() - 1);
+                } else {
+                    break;
+                }
             }
+
             return streak;
         }
 
@@ -1614,7 +1706,7 @@
         }
 
         function renderHabits() {
-            const today = new Date().toLocaleDateString();
+            const today = new Date().toISOString().split('T')[0];
 
             document.getElementById('habitList').innerHTML = db.habits.map(h => {
                 const doneToday = h.logs.includes(today);
@@ -1752,7 +1844,7 @@
         }
 
         function renderHomeHabits() {
-            const today = new Date().toLocaleDateString();
+            const today = new Date().toISOString().split('T')[0];
             const container = document.getElementById('homeHabitList');
 
             if (!container) return;
@@ -1828,7 +1920,7 @@
         }
 
         function saveMood() {
-            const today = new Date().toLocaleDateString();
+            const today = new Date().toISOString().split('T')[0];
 
             // replace if already exists
             db.moods = db.moods.filter(m => m.date !== today);
