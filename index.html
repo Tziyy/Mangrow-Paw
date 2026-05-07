@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mangrow Paw | 2026</title>
+    <meta name="theme-color" content="#FFC107">
 
+    <link rel="icon" type="image/png" sizes="32x32" href="images/icon.png">
+    <link rel="apple-touch-icon" href="images/icon.png">
+    <link rel="manifest" href="manifest.json">
     <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -47,6 +51,7 @@
             margin: 0 auto;
             position: relative;
         }
+
         .top-bar {
             position: sticky;
             top: 0;
@@ -141,6 +146,7 @@
             letter-spacing: 0.8px;
             margin-bottom: 10px;
         }
+
         .tile-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -395,6 +401,7 @@
             padding: 20px;
             overflow-y: auto;
         }
+
             .modal-overlay.show {
                 display: flex;
             }
@@ -420,6 +427,7 @@
             color: var(--text-dim);
             cursor: pointer;
         }
+
         @keyframes popIn {
             from {
                 transform: scale(0.95);
@@ -650,6 +658,7 @@
             font-size: 0.8rem;
             opacity: 0.8;
         }
+
         @media (max-width: 420px) {
             .bento-grid {
                 grid-template-columns: 1fr;
@@ -728,6 +737,7 @@
         #statsView .tile {
             margin-bottom: 16px;
         }
+
         #statsView canvas {
             margin-top: 10px;
             margin-bottom: 10px;
