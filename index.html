@@ -1083,8 +1083,18 @@
         function formatDate(d = new Date()) {
             const day = String(d.getDate()).padStart(2, '0');
             const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = String(d.getFullYear()).slice(-2);
+            const year = d.getFullYear();
             return `${day}/${month}/${year}`;
+        }
+        function formatDateDisplay(key) {
+            const [y, m, d] = key.split('-');
+            return `${d}/${m}/${y}`;
+        }
+        function dateKey(d = new Date()) {
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${year}-${month}-${day}`; // internal only
         }
 
         function adjT(id, v) {
@@ -1121,7 +1131,7 @@
                 amt: amt,
                 cat: document.getElementById('expCat').value,
                 sub: subInput.value || 'Expense',
-                date: formatDate()
+                date: dateKey()
             });
             saveAndRender();
             amtInput.value = ''; subInput.value = '';
@@ -1260,7 +1270,7 @@
                 id: Date.now(),
                 type: document.getElementById('actType').value || "Activity",
                 duration: mins,
-                date: formatDate(),
+                date: dateKey(),
                 startTime: liveStartTime,
                 endTime: liveEndTime
             });
@@ -1281,7 +1291,7 @@
 
             let diff = Math.round((ed - sd) / 60000);
             db.workouts.push({
-                id: Date.now(), type: t, duration: diff, date: formatDate(),
+                id: Date.now(), type: t, duration: diff, date: dateKey(),
                 startTime: s, endTime: e
             });
             saveAndRender();
@@ -1314,7 +1324,7 @@
         let weeklySpendChart;
 
         function refreshVisuals() {
-            const today = formatDate();
+            const today = dateKey();
 
             // =========================
             // MOOD (DASHBOARD)
@@ -1640,7 +1650,10 @@
         function renderLists() {
             document.getElementById('expenseList').innerHTML = db.expenses.slice().reverse().map(e => `
                 <div class="log-card">
-                    <div class="log-meta"><strong>${e.sub}</strong><small>${e.cat} • ${e.date}</small></div>
+                    <div class="log-meta">
+    <strong>${e.sub}</strong>
+    <small>${e.cat} • ${formatDateDisplay(e.date)}</small>
+</div>
                     <div class="actions">
                         <span style="font-weight:700">RM ${e.amt.toFixed(2)}</span>
                         <div class="action-btns">
@@ -1684,7 +1697,7 @@
         }
 
         function toggleHabitDone(id) {
-            const today = formatDate();
+            const today = dateKey();
             const habit = db.habits.find(h => h.id === id);
 
             if (!habit) return;
@@ -1723,7 +1736,7 @@
         }
 
         function renderHabits() {
-            const today = formatDate();
+            const today = dateKey();
 
             document.getElementById('habitList').innerHTML = db.habits.map(h => {
                 const doneToday = h.logs.includes(today);
@@ -1861,7 +1874,7 @@
         }
 
         function renderHomeHabits() {
-            const today = formatDate();
+            const today = dateKey();
             const container = document.getElementById('homeHabitList');
 
             if (!container) return;
@@ -1937,7 +1950,7 @@
         }
 
         function saveMood() {
-            const today = formatDate();
+            const today = dateKey();
 
             // replace if already exists
             db.moods = db.moods.filter(m => m.date !== today);
