@@ -1080,6 +1080,12 @@
             let h12 = h24 % 12 || 12;
             return { h: h12.toString().padStart(2, '0'), m: m24.toString().padStart(2, '0'), ap };
         }
+        function formatDate(d = new Date()) {
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = String(d.getFullYear()).slice(-2);
+            return `${day}/${month}/${year}`;
+        }
 
         function adjT(id, v) {
             let el = document.getElementById(id);
@@ -1115,7 +1121,7 @@
                 amt: amt,
                 cat: document.getElementById('expCat').value,
                 sub: subInput.value || 'Expense',
-                date: new Date().toISOString().split('T')[0]
+                date: formatDate()
             });
             saveAndRender();
             amtInput.value = ''; subInput.value = '';
@@ -1254,7 +1260,7 @@
                 id: Date.now(),
                 type: document.getElementById('actType').value || "Activity",
                 duration: mins,
-                date: new Date().toISOString().split('T')[0],
+                date: formatDate(),
                 startTime: liveStartTime,
                 endTime: liveEndTime
             });
@@ -1275,7 +1281,7 @@
 
             let diff = Math.round((ed - sd) / 60000);
             db.workouts.push({
-                id: Date.now(), type: t, duration: diff, date: new Date().toISOString().split('T')[0],
+                id: Date.now(), type: t, duration: diff, date: formatDate(),
                 startTime: s, endTime: e
             });
             saveAndRender();
@@ -1308,7 +1314,7 @@
         let weeklySpendChart;
 
         function refreshVisuals() {
-            const today = new Date().toISOString().split('T')[0];
+            const today = formatDate();
 
             // =========================
             // MOOD (DASHBOARD)
@@ -1678,7 +1684,7 @@
         }
 
         function toggleHabitDone(id) {
-            const today = new Date().toISOString().split('T')[0];
+            const today = formatDate();
             const habit = db.habits.find(h => h.id === id);
 
             if (!habit) return;
@@ -1717,7 +1723,7 @@
         }
 
         function renderHabits() {
-            const today = new Date().toISOString().split('T')[0];
+            const today = formatDate();
 
             document.getElementById('habitList').innerHTML = db.habits.map(h => {
                 const doneToday = h.logs.includes(today);
@@ -1855,7 +1861,7 @@
         }
 
         function renderHomeHabits() {
-            const today = new Date().toISOString().split('T')[0];
+            const today = formatDate();
             const container = document.getElementById('homeHabitList');
 
             if (!container) return;
@@ -1931,7 +1937,7 @@
         }
 
         function saveMood() {
-            const today = new Date().toISOString().split('T')[0];
+            const today = formatDate();
 
             // replace if already exists
             db.moods = db.moods.filter(m => m.date !== today);
